@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BuscaPlato — Encuentra tu plato favorito en Santiago",
+  title: "FoodWise — Encuentra tu plato favorito en Santiago",
   description:
     "Busca restaurantes en Santiago de Chile por el plato que quieres comer. Resultados ordenados por coincidencia y cercanía.",
 };

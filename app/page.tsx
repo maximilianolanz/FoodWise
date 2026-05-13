@@ -78,11 +78,13 @@ export default async function Home({
           Santiago, Chile
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl">
-          BuscaPlato
+          FoodWise
         </h1>
         <p className="max-w-2xl text-zinc-600 dark:text-zinc-400">
-          Encuentra restaurantes por el plato que quieres comer. Ordenamos por
-          coincidencia con el plato y cercanía a tu ubicación.
+          Encuentra restaurantes por el plato que quieres comer.
+        </p>
+        <p className="max-w-2xl text-zinc-600 dark:text-zinc-400">
+          Ordenamos por coincidencia con el plato y cercanía a tu ubicación.
         </p>
       </header>
 
@@ -118,17 +120,26 @@ export default async function Home({
         <Sugerencias />
       )}
 
-      <footer className="mt-auto pt-8 text-xs text-zinc-400 dark:text-zinc-500">
-        Mapa © contribuyentes de{" "}
-        <a
-          href="https://www.openstreetmap.org/copyright"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-zinc-600 dark:hover:text-zinc-300"
-        >
-          OpenStreetMap
-        </a>
-        . Datos de restaurantes de muestra.
+      <footer className="mt-auto pt-8">
+        <p className="text-m text-zinc-500 dark:text-zinc-500 font-bold">
+          Gestión de Proyectos de Tecnologías de la Información [IIC3113-2]
+        </p>
+        <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-500">
+          Grupo 1: Vicente Sajuria - Miguel Mujica - Maximiliano Lanz - Matías Cruz
+        </p>
+
+        <p className="text-xs text-zinc-400 dark:text-zinc-500">
+          Mapa © contribuyentes de{" "}
+          <a
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-zinc-600 dark:hover:text-zinc-300"
+          >
+            OpenStreetMap
+          </a>
+          . Datos de restaurantes de muestra.
+        </p>
       </footer>
     </main>
   );
