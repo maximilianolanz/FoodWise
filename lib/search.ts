@@ -1,20 +1,7 @@
 import { restaurantes } from "./data/restaurants";
 import { haversineKm, proximityScore } from "./geo";
+import { normalizar, tokens } from "./text";
 import type { LatLng, MenuItem, Restaurant, RestaurantMatch } from "./types";
-
-function normalizar(texto: string): string {
-  return texto
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .trim();
-}
-
-function tokens(texto: string): string[] {
-  return normalizar(texto)
-    .split(/[^a-z0-9]+/i)
-    .filter(Boolean);
-}
 
 function platoMatchScore(plato: MenuItem, consulta: string): number {
   if (!consulta) return 0;
@@ -40,13 +27,29 @@ function platoMatchScore(plato: MenuItem, consulta: string): number {
   return Math.min(coincidencias / qTokens.length, 0.8);
 }
 
+/**
+ * Score a dish against every keyword (AND semantics): a dish only matches if
+ * each keyword is found in its name or description. Returns 0 if any keyword
+ * is missing, otherwise the average of the per-keyword scores.
+ */
+function platoMatchScoreMulti(plato: MenuItem, consultas: string[]): number {
+  if (consultas.length === 0) return 0;
+  let suma = 0;
+  for (const consulta of consultas) {
+    const score = platoMatchScore(plato, consulta);
+    if (score <= 0) return 0;
+    suma += score;
+  }
+  return suma / consultas.length;
+}
+
 function mejorPlato(
   restaurante: Restaurant,
-  consulta: string,
+  consultas: string[],
 ): { plato: MenuItem; matchScore: number } | null {
   let mejor: { plato: MenuItem; matchScore: number } | null = null;
   for (const plato of restaurante.menu) {
-    const matchScore = platoMatchScore(plato, consulta);
+    const matchScore = platoMatchScoreMulti(plato, consultas);
     if (matchScore <= 0) continue;
     if (!mejor || matchScore > mejor.matchScore) {
       mejor = { plato, matchScore };
@@ -56,22 +59,22 @@ function mejorPlato(
 }
 
 export type BuscarOpciones = {
-  consulta: string;
+  consultas: string[];
   ubicacion: LatLng;
   limite?: number;
 };
 
 export function buscar({
-  consulta,
+  consultas,
   ubicacion,
   limite = 12,
 }: BuscarOpciones): RestaurantMatch[] {
-  const q = consulta.trim();
-  if (!q) return [];
+  const keywords = consultas.map((c) => c.trim()).filter(Boolean);
+  if (keywords.length === 0) return [];
 
   const resultados: RestaurantMatch[] = [];
   for (const r of restaurantes) {
-    const mejor = mejorPlato(r, q);
+    const mejor = mejorPlato(r, keywords);
     if (!mejor) continue;
     const distanciaKm = haversineKm(ubicacion, { lat: r.lat, lng: r.lng });
     const puntaje =

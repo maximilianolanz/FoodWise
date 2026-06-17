@@ -4,6 +4,7 @@ import { ResultsList } from "@/components/results-list";
 import { ResultsMapLoader } from "@/components/results-map-loader";
 import { SearchBar } from "@/components/search-bar";
 import { ViewToggle } from "@/components/view-toggle";
+import { parseKeywords } from "@/lib/keywords";
 import { buscar } from "@/lib/search";
 import { SANTIAGO_CENTRO, type LatLng } from "@/lib/types";
 
@@ -60,16 +61,18 @@ export default async function Home({
   searchParams: Promise<RawSearchParams>;
 }) {
   const sp = await searchParams;
-  const consulta = (primero(sp.q) ?? "").trim();
+  const keywords = parseKeywords(sp.q);
   const vista = parseVista(primero(sp.vista));
   const { ubicacion, usandoFallback } = parseUbicacion(
     primero(sp.lat),
     primero(sp.lng),
   );
 
-  const resultados = consulta
-    ? buscar({ consulta, ubicacion, limite: 12 })
-    : [];
+  const resultados =
+    keywords.length > 0
+      ? buscar({ consultas: keywords, ubicacion, limite: 12 })
+      : [];
+  const consultaTexto = keywords.join(", ");
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12">
@@ -89,27 +92,27 @@ export default async function Home({
       </header>
 
       <section className="flex flex-col gap-3">
-        <SearchBar />
         <LocationPrompt
           lat={ubicacion.lat}
           lng={ubicacion.lng}
           usandoFallback={usandoFallback}
         />
+        <SearchBar />
       </section>
 
-      {consulta ? (
+      {keywords.length > 0 ? (
         <section className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
               {resultados.length > 0
-                ? `${resultados.length} resultados para "${consulta}"`
-                : `Sin resultados para "${consulta}"`}
+                ? `${resultados.length} resultados para "${consultaTexto}"`
+                : `Sin resultados para "${consultaTexto}"`}
             </h2>
             {resultados.length > 0 && <ViewToggle vista={vista} />}
           </div>
 
           {resultados.length === 0 ? (
-            <EmptyState consulta={consulta} />
+            <EmptyState consulta={consultaTexto} keywords={keywords} />
           ) : vista === "mapa" ? (
             <ResultsMapLoader resultados={resultados} ubicacion={ubicacion} />
           ) : (
@@ -167,7 +170,13 @@ function Sugerencias() {
   );
 }
 
-function EmptyState({ consulta }: { consulta: string }) {
+function EmptyState({
+  consulta,
+  keywords,
+}: {
+  consulta: string;
+  keywords: string[];
+}) {
   return (
     <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
       <p className="text-zinc-700 dark:text-zinc-300">
@@ -175,7 +184,9 @@ function EmptyState({ consulta }: { consulta: string }) {
         <span className="font-medium">&quot;{consulta}&quot;</span> en su menú.
       </p>
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Intenta con otro plato o un término más general.
+        {keywords.length > 1
+          ? "Quita alguna palabra clave o prueba términos más generales."
+          : "Intenta con otro plato o un término más general."}
       </p>
     </div>
   );
