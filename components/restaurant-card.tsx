@@ -20,47 +20,56 @@ export function RestaurantCard({
 }) {
   const { restaurante: r, plato, distanciaKm } = match;
   return (
-    <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-            {ranking !== undefined && (
-              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-xs text-white dark:bg-zinc-100 dark:text-zinc-900">
-                {ranking}
-              </span>
-            )}
-            {r.nombre}
-          </h3>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {r.comuna} · {r.direccion}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-sm text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-          <span aria-hidden>★</span>
-          <span className="font-medium">{r.rating.toFixed(1)}</span>
-        </div>
-      </header>
-
-      <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
-        <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Plato encontrado
-        </p>
-        <div className="mt-1 flex items-baseline justify-between gap-3">
-          <p className="text-base font-medium text-zinc-900 dark:text-zinc-50">
+    <article className="group flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+      {/* El plato manda: nombre del plato + precio como protagonistas */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-start gap-2">
+          {ranking !== undefined && (
+            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[11px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+              {ranking}
+            </span>
+          )}
+          <h3 className="text-lg font-semibold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50">
             {plato.plato}
-          </p>
-          <p className="shrink-0 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {clp.format(plato.precio)}
-          </p>
+          </h3>
         </div>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          {plato.descripcion}
+        <p className="shrink-0 pt-0.5 text-right text-base font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+          {clp.format(plato.precio)}
         </p>
       </div>
 
-      <footer className="mt-3 flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-        <span aria-label="Distancia">📍 {distanciaTexto(distanciaKm)}</span>
-      </footer>
+      {/* Ingredientes: el segundo protagonista, no el local */}
+      <p className="mt-2 border-l-2 border-amber-200 pl-3 text-sm leading-relaxed text-zinc-600 dark:border-amber-900/50 dark:text-zinc-300">
+        {plato.descripcion}
+      </p>
+
+      {/* Dónde comerlo: el restaurante pasa a segundo plano */}
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+        <div className="flex min-w-0 items-center gap-1.5 text-sm">
+          <span aria-hidden className="shrink-0 text-zinc-400 dark:text-zinc-500">
+            🍴
+          </span>
+          <p className="truncate">
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+              {r.nombre}
+            </span>
+            <span className="text-zinc-400 dark:text-zinc-500">
+              {" · "}
+              {r.comuna}
+            </span>
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+            <span aria-hidden>★</span>
+            <span className="font-medium tabular-nums">{r.rating.toFixed(1)}</span>
+          </span>
+          <span className="inline-flex items-center gap-1" aria-label="Distancia">
+            <span aria-hidden>📍</span>
+            <span className="tabular-nums">{distanciaTexto(distanciaKm)}</span>
+          </span>
+        </div>
+      </div>
     </article>
   );
 }

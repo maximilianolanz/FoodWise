@@ -109,33 +109,36 @@ export default function ResultsMap({
             <Popup>
               <div style={{ minWidth: 200 }}>
                 <div style={{ fontSize: 12, color: "#71717a" }}>#{i + 1}</div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>
-                  {m.restaurante.nombre}
+                <div style={{ fontWeight: 600, fontSize: 15 }}>
+                  {m.plato.plato}
                 </div>
-                <div style={{ fontSize: 12, color: "#52525b" }}>
-                  {m.restaurante.comuna} · ★ {m.restaurante.rating.toFixed(1)}
+                <div style={{ marginTop: 2, fontSize: 12, color: "#52525b" }}>
+                  {m.plato.descripcion}
+                </div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#b45309",
+                  }}
+                >
+                  {clp.format(m.plato.precio)}
                 </div>
                 <div
                   style={{
                     marginTop: 8,
                     paddingTop: 8,
                     borderTop: "1px solid #e4e4e7",
+                    fontSize: 12,
+                    color: "#52525b",
                   }}
                 >
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>
-                    {m.plato.plato}
+                  <div>
+                    🍴 {m.restaurante.nombre} · {m.restaurante.comuna}
                   </div>
-                  <div style={{ fontSize: 12, color: "#52525b" }}>
-                    {m.plato.descripcion}
-                  </div>
-                  <div
-                    style={{
-                      marginTop: 4,
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {clp.format(m.plato.precio)} ·{" "}
+                  <div style={{ marginTop: 2 }}>
+                    ★ {m.restaurante.rating.toFixed(1)} ·{" "}
                     {m.distanciaKm < 1
                       ? `${Math.round(m.distanciaKm * 1000)} m`
                       : `${m.distanciaKm.toFixed(1)} km`}
