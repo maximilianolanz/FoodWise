@@ -1,20 +1,40 @@
 import Link from "next/link";
+import { FiltersSidebar } from "@/components/filters-sidebar";
 import { LocationPrompt } from "@/components/location-prompt";
 import { ResultsList } from "@/components/results-list";
 import { ResultsMapLoader } from "@/components/results-map-loader";
 import { SearchBar } from "@/components/search-bar";
+import { SortSelect } from "@/components/sort-select";
 import { ViewToggle } from "@/components/view-toggle";
+import {
+  aplicarFiltros,
+  comunasDisponibles,
+  hayFiltrosActivos,
+  parseFiltros,
+  rangoPrecios,
+  rangoRatings,
+} from "@/lib/filters";
 import { parseKeywords } from "@/lib/keywords";
 import { buscar } from "@/lib/search";
+import { ordenar, parseOrden } from "@/lib/sort";
 import { SANTIAGO_CENTRO, type LatLng } from "@/lib/types";
 
 type Vista = "lista" | "mapa";
+
+const LIMITE_RESULTADOS = 24;
 
 type RawSearchParams = {
   q?: string | string[];
   vista?: string | string[];
   lat?: string | string[];
   lng?: string | string[];
+  precioMin?: string | string[];
+  precioMax?: string | string[];
+  comuna?: string | string[];
+  ratingMin?: string | string[];
+  ratingMax?: string | string[];
+  dist?: string | string[];
+  orden?: string | string[];
 };
 
 const SUGERENCIAS = [
@@ -68,11 +88,19 @@ export default async function Home({
     primero(sp.lng),
   );
 
-  const resultados =
-    keywords.length > 0
-      ? buscar({ consultas: keywords, ubicacion, limite: 12 })
-      : [];
+  const filtros = parseFiltros(sp);
+  const orden = parseOrden(sp.orden);
+
+  const base =
+    keywords.length > 0 ? buscar({ consultas: keywords, ubicacion }) : [];
+  const comunas = comunasDisponibles(base);
+  const rangoPrecio = rangoPrecios(base);
+  const rangoRating = rangoRatings(base);
+  const filtrados = aplicarFiltros(base, filtros);
+  const visibles = ordenar(filtrados, orden).slice(0, LIMITE_RESULTADOS);
+
   const consultaTexto = keywords.join(", ");
+  const filtrosActivos = hayFiltrosActivos(filtros);
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12">
@@ -100,27 +128,49 @@ export default async function Home({
         <SearchBar />
       </section>
 
-      {keywords.length > 0 ? (
+      {keywords.length === 0 ? (
+        <Sugerencias />
+      ) : base.length === 0 ? (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
+            Sin resultados para &quot;{consultaTexto}&quot;
+          </h2>
+          <EmptyBusqueda consulta={consultaTexto} keywords={keywords} />
+        </section>
+      ) : (
         <section className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
-              {resultados.length > 0
-                ? `${resultados.length} resultados para "${consultaTexto}"`
-                : `Sin resultados para "${consultaTexto}"`}
+              {filtrosActivos
+                ? `${filtrados.length} de ${base.length} resultados para "${consultaTexto}"`
+                : `${base.length} resultados para "${consultaTexto}"`}
             </h2>
-            {resultados.length > 0 && <ViewToggle vista={vista} />}
+            <div className="flex items-center gap-3">
+              <SortSelect />
+              {filtrados.length > 0 && <ViewToggle vista={vista} />}
+            </div>
           </div>
 
-          {resultados.length === 0 ? (
-            <EmptyState consulta={consultaTexto} keywords={keywords} />
-          ) : vista === "mapa" ? (
-            <ResultsMapLoader resultados={resultados} ubicacion={ubicacion} />
-          ) : (
-            <ResultsList resultados={resultados} />
-          )}
+          <div className="flex flex-col gap-6 md:flex-row md:items-start">
+            <FiltersSidebar
+              comunas={comunas}
+              rangoPrecio={rangoPrecio}
+              rangoRating={rangoRating}
+            />
+            <div className="min-w-0 flex-1">
+              {filtrados.length === 0 ? (
+                <EmptyFiltros />
+              ) : vista === "mapa" ? (
+                <ResultsMapLoader
+                  resultados={visibles}
+                  ubicacion={ubicacion}
+                />
+              ) : (
+                <ResultsList resultados={visibles} />
+              )}
+            </div>
+          </div>
         </section>
-      ) : (
-        <Sugerencias />
       )}
 
       <footer className="mt-auto pt-8">
@@ -170,7 +220,7 @@ function Sugerencias() {
   );
 }
 
-function EmptyState({
+function EmptyBusqueda({
   consulta,
   keywords,
 }: {
@@ -187,6 +237,19 @@ function EmptyState({
         {keywords.length > 1
           ? "Quita alguna palabra clave o prueba términos más generales."
           : "Intenta con otro plato o un término más general."}
+      </p>
+    </div>
+  );
+}
+
+function EmptyFiltros() {
+  return (
+    <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
+      <p className="text-zinc-700 dark:text-zinc-300">
+        Ningún resultado coincide con los filtros seleccionados.
+      </p>
+      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        Ajusta o limpia los filtros para ver más opciones.
       </p>
     </div>
   );

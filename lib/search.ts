@@ -61,13 +61,16 @@ function mejorPlato(
 export type BuscarOpciones = {
   consultas: string[];
   ubicacion: LatLng;
-  limite?: number;
 };
 
+/**
+ * Returns every matching restaurant ranked by relevance (puntaje). Filtering,
+ * sorting, and display limits are applied downstream so they operate on the
+ * complete match set.
+ */
 export function buscar({
   consultas,
   ubicacion,
-  limite = 12,
 }: BuscarOpciones): RestaurantMatch[] {
   const keywords = consultas.map((c) => c.trim()).filter(Boolean);
   if (keywords.length === 0) return [];
@@ -87,7 +90,5 @@ export function buscar({
     });
   }
 
-  return resultados
-    .sort((a, b) => b.puntaje - a.puntaje)
-    .slice(0, limite);
+  return resultados.sort((a, b) => b.puntaje - a.puntaje);
 }
