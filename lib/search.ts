@@ -1,4 +1,5 @@
 import { restaurantes } from "./data/restaurants";
+import { cumpleDietas, type Diet } from "./diet";
 import { haversineKm, proximityScore } from "./geo";
 import { normalizar, tokens } from "./text";
 import type { LatLng, MenuItem, Restaurant, RestaurantMatch } from "./types";
@@ -46,9 +47,13 @@ function platoMatchScoreMulti(plato: MenuItem, consultas: string[]): number {
 function mejorPlato(
   restaurante: Restaurant,
   consultas: string[],
+  dietas: ReadonlyArray<Diet>,
 ): { plato: MenuItem; matchScore: number } | null {
   let mejor: { plato: MenuItem; matchScore: number } | null = null;
   for (const plato of restaurante.menu) {
+    // Dietary restrictions constrain selection up front, so a restaurant
+    // surfaces its best COMPLIANT match rather than being dropped post-hoc.
+    if (!cumpleDietas(plato.dietas, dietas)) continue;
     const matchScore = platoMatchScoreMulti(plato, consultas);
     if (matchScore <= 0) continue;
     if (!mejor || matchScore > mejor.matchScore) {
@@ -61,23 +66,25 @@ function mejorPlato(
 export type BuscarOpciones = {
   consultas: string[];
   ubicacion: LatLng;
+  dietas?: ReadonlyArray<Diet>;
 };
 
 /**
- * Returns every matching restaurant ranked by relevance (puntaje). Filtering,
- * sorting, and display limits are applied downstream so they operate on the
- * complete match set.
+ * Returns every matching restaurant ranked by relevance (puntaje). Dietary
+ * restrictions are applied during dish selection; other filtering, sorting, and
+ * display limits are applied downstream so they operate on the full match set.
  */
 export function buscar({
   consultas,
   ubicacion,
+  dietas = [],
 }: BuscarOpciones): RestaurantMatch[] {
   const keywords = consultas.map((c) => c.trim()).filter(Boolean);
   if (keywords.length === 0) return [];
 
   const resultados: RestaurantMatch[] = [];
   for (const r of restaurantes) {
-    const mejor = mejorPlato(r, keywords);
+    const mejor = mejorPlato(r, keywords, dietas);
     if (!mejor) continue;
     const distanciaKm = haversineKm(ubicacion, { lat: r.lat, lng: r.lng });
     const puntaje =

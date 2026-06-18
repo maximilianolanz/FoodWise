@@ -3,10 +3,13 @@ export type LatLng = {
   lng: number;
 };
 
+import type { Diet } from "./diet";
+
 export type MenuItem = {
   plato: string;
   descripcion: string;
   precio: number;
+  dietas?: ReadonlyArray<Diet>;
 };
 
 export type Restaurant = {

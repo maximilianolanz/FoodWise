@@ -1,3 +1,4 @@
+import { DIETAS } from "@/lib/diet";
 import type { RestaurantMatch } from "@/lib/types";
 
 const clp = new Intl.NumberFormat("es-CL", {
@@ -42,6 +43,19 @@ export function RestaurantCard({
       <p className="mt-2 border-l-2 border-amber-200 pl-3 text-sm leading-relaxed text-zinc-600 dark:border-amber-900/50 dark:text-zinc-300">
         {plato.descripcion}
       </p>
+
+      {plato.dietas && plato.dietas.length > 0 && (
+        <ul className="mt-3 flex flex-wrap gap-1.5">
+          {DIETAS.filter((d) => plato.dietas?.includes(d.key)).map((d) => (
+            <li
+              key={d.key}
+              className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+            >
+              {d.badge}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* Dónde comerlo: el restaurante pasa a segundo plano */}
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">

@@ -1,3 +1,4 @@
+import { type Diet, DIETAS_KEYS } from "./diet";
 import { normalizar } from "./text";
 import type { RestaurantMatch } from "./types";
 
@@ -22,6 +23,7 @@ export type Filtros = {
   comunas: string[];
   rating: Rango;
   distanciaMax: number | null;
+  dietas: Diet[];
 };
 
 function primero(v: string | string[] | undefined): string | undefined {
@@ -47,7 +49,21 @@ type RawParams = {
   ratingMin?: string | string[];
   ratingMax?: string | string[];
   dist?: string | string[];
+  dieta?: string | string[];
 };
+
+function parseDietas(raw: string | string[] | undefined): Diet[] {
+  const lista = Array.isArray(raw) ? raw : raw === undefined ? [] : [raw];
+  const vistos = new Set<string>();
+  const dietas: Diet[] = [];
+  for (const item of lista) {
+    const key = item.trim() as Diet;
+    if (!DIETAS_KEYS.includes(key) || vistos.has(key)) continue;
+    vistos.add(key);
+    dietas.push(key);
+  }
+  return dietas;
+}
 
 export function parseFiltros(sp: RawParams): Filtros {
   const comunasRaw = Array.isArray(sp.comuna)
@@ -79,6 +95,7 @@ export function parseFiltros(sp: RawParams): Filtros {
       max: parseNumero(sp.ratingMax, RATING_MIN, RATING_MAX),
     },
     distanciaMax,
+    dietas: parseDietas(sp.dieta),
   };
 }
 
@@ -91,7 +108,8 @@ export function hayFiltrosActivos(filtros: Filtros): boolean {
     rangoActivo(filtros.precio) ||
     filtros.comunas.length > 0 ||
     rangoActivo(filtros.rating) ||
-    filtros.distanciaMax !== null
+    filtros.distanciaMax !== null ||
+    filtros.dietas.length > 0
   );
 }
 

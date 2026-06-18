@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { DIETAS, type Diet } from "@/lib/diet";
 import {
   DISTANCIAS_MAX,
   RATING_MAX,
@@ -11,6 +12,7 @@ import {
 import { normalizar } from "@/lib/text";
 
 const FILTER_KEYS = [
+  "dieta",
   "precioMin",
   "precioMax",
   "comuna",
@@ -23,16 +25,19 @@ export function FiltersSidebar({
   comunas,
   rangoPrecio,
   rangoRating,
+  conteoDietas,
 }: {
   comunas: string[];
   rangoPrecio: RangoNumerico | null;
   rangoRating: RangoNumerico | null;
+  conteoDietas: Record<Diet, number>;
 }) {
   const router = useRouter();
   const params = useSearchParams();
   const [abierto, setAbierto] = useState(false);
 
   const comunasSel = new Set(params.getAll("comuna").map(normalizar));
+  const dietasSel = new Set(params.getAll("dieta"));
   const activos = FILTER_KEYS.reduce((n, k) => n + params.getAll(k).length, 0);
 
   function navegar(next: URLSearchParams) {
@@ -58,6 +63,15 @@ export function FiltersSidebar({
     const next = new URLSearchParams(params.toString());
     aplicarParam(next, keyMin, rawMin);
     aplicarParam(next, keyMax, rawMax);
+    navegar(next);
+  }
+
+  function toggleDieta(key: Diet) {
+    const next = new URLSearchParams(params.toString());
+    next.delete("dieta");
+    const restantes = params.getAll("dieta").filter((d) => d !== key);
+    const finales = dietasSel.has(key) ? restantes : [...restantes, key];
+    for (const d of finales) next.append("dieta", d);
     navegar(next);
   }
 
@@ -108,6 +122,17 @@ export function FiltersSidebar({
             </button>
           )}
         </div>
+
+        <Grupo titulo="Restricciones alimentarias">
+          {DIETAS.map((d) => (
+            <Check
+              key={d.key}
+              label={`${d.label} (${conteoDietas[d.key]})`}
+              seleccionado={dietasSel.has(d.key)}
+              onToggle={() => toggleDieta(d.key)}
+            />
+          ))}
+        </Grupo>
 
         <Grupo titulo="Precio (CLP)">
           <RangoFiltro

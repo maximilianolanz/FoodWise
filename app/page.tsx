@@ -6,9 +6,11 @@ import { ResultsMapLoader } from "@/components/results-map-loader";
 import { SearchBar } from "@/components/search-bar";
 import { SortSelect } from "@/components/sort-select";
 import { ViewToggle } from "@/components/view-toggle";
+import { type Diet, DIETAS_KEYS } from "@/lib/diet";
 import {
   aplicarFiltros,
   comunasDisponibles,
+  type Filtros,
   hayFiltrosActivos,
   parseFiltros,
   rangoPrecios,
@@ -34,8 +36,29 @@ type RawSearchParams = {
   ratingMin?: string | string[];
   ratingMax?: string | string[];
   dist?: string | string[];
+  dieta?: string | string[];
   orden?: string | string[];
 };
+
+/**
+ * Per-diet result count for the sidebar facet: how many results if this diet
+ * were the only one ticked, with the other active filters applied.
+ */
+function contarDietas(
+  keywords: string[],
+  ubicacion: LatLng,
+  filtros: Filtros,
+): Record<Diet, number> {
+  const entries = DIETAS_KEYS.map((d) => {
+    if (keywords.length === 0) return [d, 0] as const;
+    const res = aplicarFiltros(
+      buscar({ consultas: keywords, ubicacion, dietas: [d] }),
+      filtros,
+    );
+    return [d, res.length] as const;
+  });
+  return Object.fromEntries(entries) as Record<Diet, number>;
+}
 
 const SUGERENCIAS = [
   "Pastel de choclo",
@@ -92,10 +115,21 @@ export default async function Home({
   const orden = parseOrden(sp.orden);
 
   const base =
-    keywords.length > 0 ? buscar({ consultas: keywords, ubicacion }) : [];
+    keywords.length > 0
+      ? buscar({ consultas: keywords, ubicacion, dietas: filtros.dietas })
+      : [];
+  // Total keyword matches ignoring every filter — used to tell "no dish matches"
+  // apart from "filters (incl. diet) removed everything".
+  const totalSinFiltros =
+    filtros.dietas.length === 0
+      ? base.length
+      : keywords.length > 0
+        ? buscar({ consultas: keywords, ubicacion }).length
+        : 0;
   const comunas = comunasDisponibles(base);
   const rangoPrecio = rangoPrecios(base);
   const rangoRating = rangoRatings(base);
+  const conteoDietas = contarDietas(keywords, ubicacion, filtros);
   const filtrados = aplicarFiltros(base, filtros);
   const visibles = ordenar(filtrados, orden).slice(0, LIMITE_RESULTADOS);
 
@@ -130,7 +164,7 @@ export default async function Home({
 
       {keywords.length === 0 ? (
         <Sugerencias />
-      ) : base.length === 0 ? (
+      ) : totalSinFiltros === 0 ? (
         <section className="flex flex-col gap-4">
           <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
             Sin resultados para &quot;{consultaTexto}&quot;
@@ -142,8 +176,8 @@ export default async function Home({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
               {filtrosActivos
-                ? `${filtrados.length} de ${base.length} resultados para "${consultaTexto}"`
-                : `${base.length} resultados para "${consultaTexto}"`}
+                ? `${filtrados.length} de ${totalSinFiltros} resultados para "${consultaTexto}"`
+                : `${totalSinFiltros} resultados para "${consultaTexto}"`}
             </h2>
             <div className="flex items-center gap-3">
               <SortSelect />
@@ -156,10 +190,11 @@ export default async function Home({
               comunas={comunas}
               rangoPrecio={rangoPrecio}
               rangoRating={rangoRating}
+              conteoDietas={conteoDietas}
             />
             <div className="min-w-0 flex-1">
               {filtrados.length === 0 ? (
-                <EmptyFiltros />
+                <EmptyFiltros dietasActivas={filtros.dietas.length > 0} />
               ) : vista === "mapa" ? (
                 <ResultsMapLoader
                   resultados={visibles}
@@ -242,14 +277,16 @@ function EmptyBusqueda({
   );
 }
 
-function EmptyFiltros() {
+function EmptyFiltros({ dietasActivas }: { dietasActivas: boolean }) {
   return (
     <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
       <p className="text-zinc-700 dark:text-zinc-300">
         Ningún resultado coincide con los filtros seleccionados.
       </p>
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Ajusta o limpia los filtros para ver más opciones.
+        {dietasActivas
+          ? "Aún hay pocos platos etiquetados con restricciones alimentarias. Prueba quitar alguna restricción u otro filtro."
+          : "Ajusta o limpia los filtros para ver más opciones."}
       </p>
     </div>
   );
