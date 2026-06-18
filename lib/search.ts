@@ -1,7 +1,7 @@
 import { restaurantes } from "./data/restaurants";
 import { cumpleDietas, type Diet } from "./diet";
 import { haversineKm, proximityScore } from "./geo";
-import { normalizar, tokens } from "./text";
+import { normalizar, tokensSignificativos } from "./text";
 import type { LatLng, MenuItem, Restaurant, RestaurantMatch } from "./types";
 
 function platoMatchScore(plato: MenuItem, consulta: string): number {
@@ -15,15 +15,22 @@ function platoMatchScore(plato: MenuItem, consulta: string): number {
   if (nombre.includes(q)) return 0.85;
   if (descripcion.includes(q)) return 0.55;
 
-  const qTokens = tokens(consulta);
-  const nTokens = new Set(tokens(plato.plato));
-  const dTokens = new Set(tokens(plato.descripcion));
+  const qTokens = tokensSignificativos(consulta);
+  const nTokens = new Set(tokensSignificativos(plato.plato));
+  const dTokens = new Set(tokensSignificativos(plato.descripcion));
   if (qTokens.length === 0) return 0;
 
+  // AND over significant words: every meaningful query word must appear in the
+  // dish name or description, mirroring the AND already applied across separate
+  // keywords. Otherwise sharing a single incidental word (an ingredient named in
+  // prose) is enough to surface an unrelated dish — e.g. "Pastel de choclo"
+  // pulling in "Cazuela de ave" because choclo sits in its description. A name
+  // hit counts fully; a description-only hit counts partially.
   let coincidencias = 0;
   for (const t of qTokens) {
     if (nTokens.has(t)) coincidencias += 1;
     else if (dTokens.has(t)) coincidencias += 0.4;
+    else return 0;
   }
   return Math.min(coincidencias / qTokens.length, 0.8);
 }
