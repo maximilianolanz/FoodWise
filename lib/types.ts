@@ -3,10 +3,13 @@ export type LatLng = {
   lng: number;
 };
 
+import type { Diet } from "./diet";
+
 export type MenuItem = {
   plato: string;
   descripcion: string;
   precio: number;
+  dietas?: ReadonlyArray<Diet>;
 };
 
 export type Restaurant = {
@@ -18,6 +21,10 @@ export type Restaurant = {
   lat: number;
   lng: number;
   menu: ReadonlyArray<MenuItem>;
+  /** Texto libre con las horas de mayor concurrencia (estimado). */
+  horarioConcurrido?: string;
+  /** URL del sitio web oficial del restaurante. */
+  sitioWeb?: string;
 };
 
 export type RestaurantMatch = {
