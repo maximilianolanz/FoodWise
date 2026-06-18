@@ -10,6 +10,11 @@ import {
   TileLayer,
   useMap,
 } from "react-leaflet";
+import {
+  ENLACE_EXTERNO,
+  infoContacto,
+  SIN_DATO,
+} from "@/lib/restaurant-contact";
 import type { LatLng, RestaurantMatch } from "@/lib/types";
 
 const clp = new Intl.NumberFormat("es-CL", {
@@ -100,7 +105,9 @@ export default function ResultsMap({
         >
           <Popup>Tu ubicación</Popup>
         </Marker>
-        {resultados.map((m, i) => (
+        {resultados.map((m, i) => {
+          const contacto = infoContacto(m.restaurante);
+          return (
           <Marker
             key={m.restaurante.id}
             position={[m.restaurante.lat, m.restaurante.lng]}
@@ -144,10 +151,37 @@ export default function ResultsMap({
                       : `${m.distanciaKm.toFixed(1)} km`}
                   </div>
                 </div>
+                <div
+                  style={{
+                    marginTop: 8,
+                    paddingTop: 8,
+                    borderTop: "1px solid #e4e4e7",
+                    fontSize: 12,
+                    color: "#52525b",
+                  }}
+                >
+                  <div>📍 {contacto.direccion}</div>
+                  <div style={{ marginTop: 4 }}>🕐 {contacto.horario}</div>
+                  <div style={{ marginTop: 4 }}>
+                    🔗{" "}
+                    {contacto.sitioWebUrl ? (
+                      <a
+                        href={contacto.sitioWebUrl}
+                        {...ENLACE_EXTERNO}
+                        style={{ color: "#b45309", fontWeight: 600 }}
+                      >
+                        {contacto.sitioWebTexto} ↗
+                      </a>
+                    ) : (
+                      <span style={{ color: "#a1a1aa" }}>{SIN_DATO}</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </Popup>
           </Marker>
-        ))}
+          );
+        })}
         <FitBounds puntos={puntos} />
       </MapContainer>
     </div>

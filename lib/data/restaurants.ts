@@ -1,6 +1,7 @@
 import type { Restaurant } from "../types";
+import { contactoPorId } from "./restaurant-contacto";
 
-export const restaurantes: ReadonlyArray<Restaurant> = [
+const restaurantesBase: ReadonlyArray<Restaurant> = [
   {
     id: "r-001",
     nombre: "Liguria Bar",
@@ -1154,3 +1155,7 @@ export const restaurantes: ReadonlyArray<Restaurant> = [
     ],
   },
 ];
+
+export const restaurantes: ReadonlyArray<Restaurant> = restaurantesBase.map(
+  (r) => ({ ...r, ...contactoPorId[r.id] }),
+);

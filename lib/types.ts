@@ -21,6 +21,10 @@ export type Restaurant = {
   lat: number;
   lng: number;
   menu: ReadonlyArray<MenuItem>;
+  /** Texto libre con las horas de mayor concurrencia (estimado). */
+  horarioConcurrido?: string;
+  /** URL del sitio web oficial del restaurante. */
+  sitioWeb?: string;
 };
 
 export type RestaurantMatch = {

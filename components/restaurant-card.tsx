@@ -1,3 +1,5 @@
+"use client";
+
 import { DIETAS } from "@/lib/diet";
 import type { RestaurantMatch } from "@/lib/types";
 
@@ -15,13 +17,30 @@ function distanciaTexto(km: number): string {
 export function RestaurantCard({
   match,
   ranking,
+  onAbrir,
 }: {
   match: RestaurantMatch;
   ranking?: number;
+  onAbrir: () => void;
 }) {
   const { restaurante: r, plato, distanciaKm } = match;
+
+  function alPresionar(e: React.KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onAbrir();
+    }
+  }
+
   return (
-    <article className="group flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onAbrir}
+      onKeyDown={alPresionar}
+      aria-label={`Ver información de ${r.nombre}`}
+      className="group flex h-full cursor-pointer flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:focus-visible:ring-offset-zinc-950"
+    >
       {/* El plato manda: nombre del plato + precio como protagonistas */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-2">
@@ -84,6 +103,14 @@ export function RestaurantCard({
           </span>
         </div>
       </div>
+
+      {/* Pista de interacción: el local pasa a primer plano al abrir */}
+      <p
+        aria-hidden
+        className="mt-3 text-right text-xs font-medium text-zinc-400 transition-colors group-hover:text-amber-600 dark:text-zinc-500 dark:group-hover:text-amber-400"
+      >
+        Ver local →
+      </p>
     </article>
   );
 }
